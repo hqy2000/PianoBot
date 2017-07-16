@@ -1,3 +1,4 @@
+
 /*
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -19,10 +20,21 @@
 #define NOTICE 2
 #define WARNING 3
 #define LOG_LEVEL 0
+#define dataPin D0
+#define clockPin D2
+#define latchPin D1
+//17-19 are the GPIOs that control the black keys
+#define o17 D5
+#define o18 D6
+#define o19 D7
 #include <algorithm>
 #include <string>
 #include <sstream>
+#include <cstdlib>
+#include <EasyTransfer.h>
 using namespace std;
+static int mask[] = {65536,32768,16384,8192,4096,2048,1024,512,256,128,64,32,16,8,4,2,1};
+static int last_iterator = sizeof(mask) / 4 - 1;
 
 //BEGIN AUTO-GENERATED ZONE
 const int keys = 5;
@@ -30,7 +42,89 @@ const int length = 260;
 const bool notes[260][5] = {false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, false, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, false, false, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, false, false, false, false, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, false, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, false, false, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, false, false, false, false, false, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, true, false, false, false, false, false, false, };
 //END AUTO-GENERATED ZONE
 
+class RegisterAndCommunicationController{
+  private:
+    //The length of binary number which can be converted
+    
+    // The class used to communicate with another board
+    EasyTransfer ET; 
+    struct SEND_DATA_STRUCTURE{
+      // The number that will be displayed in the first led
+      int16_t led1;
+      // The number that will be displayed in the second led
+      int16_t led2;
+      // The duation of displaying
+      int16_t ledduration;
+    };
+    SEND_DATA_STRUCTURE data;
+    // Char array to decimal number
+    virtual int toTen(char *array,int strlen,int *mask,int last_iterator)
+    {
+        int temp=0;
+        for(int i=strlen-1;i>=0;i--)
+            temp+=(1&(array[i]-'0'))*mask[last_iterator--];
+        return temp;
+    }
+    virtual int convertDataFromDavid(bool *bArray, int arraySize){
+      if(arraySize != 8 || arraySize !=16){
+        int newSize = arraySize + 8 % arraySize;
+        bool *newB = new bool[newSize];
+        for(int i = 0; i < newSize; i++){
+          if(i < arraySize)
+            newB[i] = bArray[i];
+          else
+            newB[i] = false;
+        }
+        return this->toTen(toBi(newB, newSize) ,newSize , mask, last_iterator);
+      }
+      return this->toTen(toBi(bArray, arraySize) , arraySize, mask, last_iterator);
+    }
+    //Bool array to the char array
+    virtual char* toBi(bool *bArray, int size)
+    {
+      char *result = new char[size];
+      for(int i = 0; i < size; i++){
+        if(bArray[i])
+          result[i] = '1';
+        else
+          result[i] = '0';
+      }
+      return result;
+    }
+  public:
+    //Convert data sent from David's program(bool array) to the binary number(to integer)
+    virtual bool magic(bool bArray[], int duration){
+      Serial.println("in");
+      int arrSize = keys;
+      int val = this->convertDataFromDavid(bArray, arrSize);
+      digitalWrite(latchPin, LOW);
+      shiftOut(dataPin, clockPin, LSBFIRST, val);
+      // If we need more than 8 keys
+      //shiftOut(dataPin, clockPin, LSBFIRST, (val >> 8));
+      digitalWrite(latchPin, HIGH);
+      data.led1 = -1;
+      data.led2 = -1;
+      for(int i = 0; i < arrSize; i++){
+        if(bArray[i]){
+          data.led1 = i+1;
+          break;
+        }
+      } 
+      for(int i = data.led1-1; i < arrSize; i++){
+        if(data.led1==-1)
+          break;
+        if(bArray[i]){
+          data.led2 = i+1;
+          break;
+        }
+      }
+      data.ledduration = duration;
+      //send the data
+      //ET.sendData();
+    }
 
+    
+};
 
 class ScoresController {
   private:
@@ -39,7 +133,7 @@ class ScoresController {
     boardtime startTime = 0;
     boardtime lastUpdatedTime = 0;
     bool isPlaying = false;
-    
+    RegisterAndCommunicationController *output  = new RegisterAndCommunicationController();
     virtual void getNotesArrayFromPROGRAM(bool *note, int row){
       for(int i=0; i<keys; i++){
         note[i] = pgm_read_byte(& notes[row][i]);
@@ -129,6 +223,7 @@ class ScoresController {
       if(this->isPlaying){ //playing
         bool note[keys];
         this->getNotes(note, currentTime);
+        output->magic(note, 10);
         this->lastUpdatedTime = currentTime;
         
         string mes = "";
@@ -159,6 +254,9 @@ class ScoresController {
 ScoresController *myScore;
 
 void setup() {
+  pinMode(dataPin, OUTPUT);
+  pinMode(clockPin, OUTPUT);
+  pinMode(latchPin, OUTPUT);
   myScore = new ScoresController();
   ESP.wdtDisable();
   Serial.begin(115200);
