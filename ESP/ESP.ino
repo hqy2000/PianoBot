@@ -34,7 +34,7 @@
 #include <EasyTransfer.h>
 using namespace std;
 //The length of binary number which can be converted
-const int mask[] = {65536,32768,16384,8192,4096,2048,1024,512,256,128,64,32,16,8,4,2,1};
+const int mask[] = {1048576,524288,262144,131072,65536,32768,16384,8192,4096,2048,1024,512,256,128,64,32,16,8,4,2,1};
 const int last_iterator = sizeof(mask) / 4 - 1;
 
 //BEGIN AUTO-GENERATED ZONE
@@ -65,7 +65,7 @@ class RegisterAndCommunicationController{
         return temp;
     }
     int convertDataFromDavid(bool bArray[], int arraySize){
-      if(arraySize != 8 || arraySize !=16){
+      if(arraySize % 8 != 0){
         int newSize = arraySize + 8 % arraySize;
         bool newB[newSize];
         for(int i = 0; i < newSize; i++){
@@ -97,11 +97,10 @@ class RegisterAndCommunicationController{
     virtual bool magic(bool bArray[], int duration){
       int arrSize = keys;
       int val = this->convertDataFromDavid(bArray, arrSize);
-      Serial.println(val);
       digitalWrite(latchPin, LOW);
       shiftOut(dataPin, clockPin, LSBFIRST, val);
       // If we need more than 8 keys
-      //shiftOut(dataPin, clockPin, LSBFIRST, (val >> 8));
+      shiftOut(dataPin, clockPin, LSBFIRST, (val >> 8));
       digitalWrite(latchPin, HIGH);
       data.led1 = -1;
       data.led2 = -1;
@@ -144,13 +143,11 @@ class ScoresController {
     virtual void getNotes(bool *note, boardtime currentTime){
       int currentRound = (int)((currentTime - this->startTime) / this->interval);
       int timeInterval = (currentTime - this->startTime) - currentRound * 50; 
-      //Serial.println(currentRound);
       bool currentNote[keys];
       this->getNotesArrayFromPROGRAM(currentNote, currentRound);
       if(timeInterval <= diffTime && currentRound != 0){
         bool lastNote[keys];
         this->getNotesArrayFromPROGRAM(lastNote, currentRound - 1);
-        //Serial.println(lastNote[0]);
         bool finalNote[keys]; 
         for(int i=0;i<keys;i++){
           if(lastNote[i] == true && currentNote[i] == false){
@@ -238,7 +235,6 @@ class ScoresController {
       } else {
         if(this->lastUpdatedTime != 0){ //pausing
           this->startTime += currentTime - this->lastUpdatedTime;
-          //Serial.print(this->startTime);
           this->lastUpdatedTime = currentTime;
         } else { //stoping
         }
@@ -252,6 +248,7 @@ class ScoresController {
 };
 
 ScoresController *myScore;
+void checkPause();
 void setup() {
   pinMode(dataPin, OUTPUT);
   pinMode(clockPin, OUTPUT);
@@ -261,14 +258,11 @@ void setup() {
   Serial.begin(115200);
   myScore->startPlaying();
 }
-
 void loop() {
   myScore->periodUpdate();
   checkPause();
   ESP.wdtFeed();
-  //delay(10);
 }
-
 void checkPause() {
   if(analogRead(A0) > 500){
     myScore->pausePlaying();
