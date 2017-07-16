@@ -23,19 +23,28 @@ struct note{
     int frequency;
     int length;
 };
+const int interval = 40; // The interval of the midi
+const bool addOne = false; // Add one to check stop (set to true when the duration has figures like 499 249 etc)
+const bool removeBlank = true; // Remove the blank part at the front
+const bool displayMatrix = false; // Display the matrix of the notes
 int returnKeys(int frequency,vector<int> frequencies);
 int main() {
-    freopen("/Users/hqy/Documents/Github/ESAP17-Robotics-Keyboard/Converter/examples/happy_birthday.in","r",stdin);
-    freopen("/Users/hqy/Documents/Github/ESAP17-Robotics-Keyboard/Converter/examples/happy_birthday.out","w",stdout);
+    freopen("/Users/hqy/Documents/Github/ESAP17-Robotics-Keyboard/Converter/examples/your_name.in","r",stdin);
+    freopen("/Users/hqy/Documents/Github/ESAP17-Robotics-Keyboard/Converter/examples/your_name.out","w",stdout);
     int time,notes,length;
     int maximum = 0;
+    int blank = 1048576;
     int count;
     vector<note> scores;
     vector<int> frequencies;
     while(cin>>time>>notes>>length){
-        length ++;
-        length = length / 50;
-        time = time / 50;
+        if(addOne)
+            length ++;
+        length = length / interval;
+        time = time / interval;
+        if(time<blank) {
+            blank = time;
+        }
         note a = {
                 .frequency = notes,
                 .time = time,
@@ -56,6 +65,11 @@ int main() {
         }
     }
     sort(frequencies.begin(), frequencies.end());
+    if(removeBlank) {
+        maximum -= blank;
+        for(int i=0;i<scores.size();i++)
+            scores[i].time -= blank;
+    }
     bool matrix[maximum][frequencies.size()];
     memset(matrix,false,sizeof(matrix));
     for(int i=0;i<scores.size();i++){
@@ -65,8 +79,21 @@ int main() {
             matrix[j][key] = true;
         }
     }
+    if(displayMatrix){
+
+        for(int i=0;i<maximum;i++){
+            for(int j=0;j<=frequencies.size()-1;j++){
+                if(matrix[i][j] == true)
+                    cout<<"1";
+                else
+                    cout<<"0";
+            }
+            cout<<endl;
+        }
+    }
     //cout<<"keys"<<frequencies.size()-
     cout<<"//BEGIN AUTO-GENERATED ZONE"<<endl;
+    cout<<"const int noteInterval = "<<interval<<";"<<endl;
     cout<<"const int keys = "<<frequencies.size()<<";"<<endl;
     cout<<"const int length = "<<maximum<<";"<<endl;
     cout<<"const bool PROGMEM notes["<<maximum<<"]["<<frequencies.size()<<"] = {";
