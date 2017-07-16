@@ -1,3 +1,18 @@
+/*
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 #include <iostream>
 #include <cstdlib>
 #include <cstdio>
@@ -54,7 +69,7 @@ int main() {
     cout<<"//BEGIN AUTO-GENERATED ZONE"<<endl;
     cout<<"const int keys = "<<frequencies.size()<<";"<<endl;
     cout<<"const int length = "<<maximum<<";"<<endl;
-    cout<<"const PROGMEM bool notes["<<maximum<<"]["<<frequencies.size()<<"] = {";
+    cout<<"const bool PROGMEM notes["<<maximum<<"]["<<frequencies.size()<<"] = {";
     for(int i=0;i<maximum;i++){
         for(int j=0;j<=frequencies.size()-1;j++){
             if(matrix[i][j] == true)
