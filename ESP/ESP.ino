@@ -19,7 +19,7 @@
 #define INFO 1
 #define NOTICE 2
 #define WARNING 3
-#define LOG_LEVEL 0
+#define LOG_LEVEL 2
 #define dataPin D0
 #define clockPin D2
 #define latchPin D1
@@ -33,6 +33,7 @@
 #include <cstdlib>
 #include <EasyTransfer.h>
 using namespace std;
+//The length of binary number which can be converted
 static int mask[] = {65536,32768,16384,8192,4096,2048,1024,512,256,128,64,32,16,8,4,2,1};
 static int last_iterator = sizeof(mask) / 4 - 1;
 
@@ -44,7 +45,6 @@ const bool notes[260][5] = {false, false, false, false, false, false, false, fal
 
 class RegisterAndCommunicationController{
   private:
-    //The length of binary number which can be converted
     
     // The class used to communicate with another board
     EasyTransfer ET; 
@@ -94,14 +94,17 @@ class RegisterAndCommunicationController{
   public:
     //Convert data sent from David's program(bool array) to the binary number(to integer)
     virtual bool magic(bool bArray[], int duration){
-      Serial.println("in");
+      //Serial.println("in");
       int arrSize = keys;
       int val = this->convertDataFromDavid(bArray, arrSize);
+      //Serial.println("converted");
       digitalWrite(latchPin, LOW);
       shiftOut(dataPin, clockPin, LSBFIRST, val);
+      //Serial.println("shifted");
       // If we need more than 8 keys
       //shiftOut(dataPin, clockPin, LSBFIRST, (val >> 8));
       digitalWrite(latchPin, HIGH);
+      //Serial.println("finishde");
       data.led1 = -1;
       data.led2 = -1;
       for(int i = 0; i < arrSize; i++){
@@ -118,7 +121,9 @@ class RegisterAndCommunicationController{
           break;
         }
       }
+      //Serial.println("duration");
       data.ledduration = duration;
+      //Serial.println("done");
       //send the data
       //ET.sendData();
     }
@@ -166,6 +171,7 @@ class ScoresController {
     }
 
     virtual void debug(int level, string name, string message){
+      /*
       string type;
       switch(level){
         case TRACE:
@@ -187,8 +193,10 @@ class ScoresController {
       if(level >= LOG_LEVEL){
         message = "[" + type + "][" + name + "]" +  message;
         const char *charMessage = message.c_str();
-        Serial.println(charMessage);
+        Serial.println(FPSTR(charMessage));
       } 
+      //delete *message;
+      */
     }
 
     
@@ -197,26 +205,26 @@ class ScoresController {
     virtual void startPlaying(){
       this->startTime = millis();
       this->isPlaying = true;
-      this->debug(INFO, "STATUS", "Playing");
+      //this->debug(INFO, "STATUS", "Playing");
     }
     virtual void pausePlaying(){
       if(this->isPlaying){
         //this->lastUpdatedTime = 0;
         this->isPlaying = false;
-        this->debug(INFO, "STATUS", "Pausing");
+        //this->debug(INFO, "STATUS", "Pausing");
       }
       
     }
     virtual void resumePlaying(){
       if(!this->isPlaying){
         this->isPlaying = true;
-        this->debug(INFO, "STATUS", "Resuming");
+        //this->debug(INFO, "STATUS", "Resuming");
       }
     }
     virtual void stopPlaying(){
       this->isPlaying = false;
       this->lastUpdatedTime = 0;
-      this->debug(INFO, "STATUS", "Stoping");
+      //this->debug(INFO, "STATUS", "Stoping");
     }
     virtual void periodUpdate(){
       boardtime currentTime = millis();
@@ -225,7 +233,7 @@ class ScoresController {
         this->getNotes(note, currentTime);
         output->magic(note, 10);
         this->lastUpdatedTime = currentTime;
-        
+        //Serial.println("Updated");
         string mes = "";
         for(int i = 0; i<keys; i++){
           if(note[i])
@@ -233,7 +241,8 @@ class ScoresController {
           else
             mes.append("0");
         }
-        this->debug(TRACE, "BINARY_OUTPUT",mes);
+        //Serial.println("Prepare for output");
+        //this->debug(TRACE, "BINARY_OUTPUT",mes);
         
       } else {
         if(this->lastUpdatedTime != 0){ //pausing
@@ -246,7 +255,7 @@ class ScoresController {
       if((currentTime - this->startTime) > length * 50){
         this->stopPlaying();
         this->startPlaying();
-        this->debug(INFO, "STATUS", "Restarting");
+        //this->debug(INFO, "STATUS", "Restarting");
       }
     };
 };
@@ -267,7 +276,7 @@ void loop() {
   myScore->periodUpdate();
   checkPause();
   ESP.wdtFeed();
-  //delay(10);
+  delay(1);
 }
 
 void checkPause() {
