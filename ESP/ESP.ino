@@ -18,7 +18,7 @@
 #define INFO 1
 #define NOTICE 2
 #define WARNING 3
-#define LOG_LEVEL 1
+#define LOG_LEVEL 0
 #include <algorithm>
 #include <string>
 #include <sstream>
@@ -49,6 +49,7 @@ class ScoresController {
     virtual void getNotes(bool *note, boardtime currentTime){
       int currentRound = (int)((currentTime - this->startTime) / this->interval);
       int timeInterval = (currentTime - this->startTime) - currentRound * 50; 
+      //Serial.println(currentRound);
       bool currentNote[keys];
       this->getNotesArrayFromPROGRAM(currentNote, currentRound);
       if(timeInterval <= diffTime && currentRound != 0){
@@ -105,8 +106,8 @@ class ScoresController {
       this->debug(INFO, "STATUS", "Playing");
     }
     virtual void pausePlaying(){
-      if(!this->isPlaying){
-        this->lastUpdatedTime = 0;
+      if(this->isPlaying){
+        //this->lastUpdatedTime = 0;
         this->isPlaying = false;
         this->debug(INFO, "STATUS", "Pausing");
       }
@@ -142,6 +143,7 @@ class ScoresController {
       } else {
         if(this->lastUpdatedTime != 0){ //pausing
           this->startTime += currentTime - this->lastUpdatedTime;
+          //Serial.print(this->startTime);
           this->lastUpdatedTime = currentTime;
         } else { //stoping
         }
@@ -167,12 +169,11 @@ void loop() {
   myScore->periodUpdate();
   checkPause();
   ESP.wdtFeed();
-  delay(10);
+  //delay(10);
 }
 
 void checkPause() {
   if(analogRead(A0) > 500){
-    Serial.println("hh");
     myScore->pausePlaying();
   } else {
     myScore->resumePlaying();
