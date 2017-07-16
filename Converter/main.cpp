@@ -10,8 +10,8 @@ struct note{
 };
 int returnKeys(int frequency,vector<int> frequencies);
 int main() {
-    freopen("/Users/hqy/CLionProjects/coverter/happy.in","r",stdin);
-    freopen("/Users/hqy/CLionProjects/coverter/array.csv","w",stdout);
+    freopen("/Users/hqy/Documents/Github/ESAP17-Robotics-Keyboard/Converter/examples/happy_birthday.in","r",stdin);
+    freopen("/Users/hqy/Documents/Github/ESAP17-Robotics-Keyboard/Converter/examples/happy_birthday.out","w",stdout);
     int time,notes,length;
     int maximum = 0;
     int count;
@@ -54,7 +54,7 @@ int main() {
     cout<<"//BEGIN AUTO-GENERATED ZONE"<<endl;
     cout<<"const int keys = "<<frequencies.size()<<";"<<endl;
     cout<<"const int length = "<<maximum<<";"<<endl;
-    cout<<"const bool notes["<<maximum<<"]["<<frequencies.size()<<"] = {";
+    cout<<"const PROGMEM bool notes["<<maximum<<"]["<<frequencies.size()<<"] = {";
     for(int i=0;i<maximum;i++){
         for(int j=0;j<=frequencies.size()-1;j++){
             if(matrix[i][j] == true)
