@@ -25,15 +25,15 @@ struct note{
     int frequency;
     int length;
 };
-const int interval = 40; // The interval of the midi
-const bool addOne = false; // Add one to check stop (set to true when the duration has figures like 499 249 etc)
-const bool removeBlank = true; // Remove the blank part at the front
+const int interval = 50; // The interval of the midi
+const bool addOne = true; // Add one to check stop (set to true when the duration has figures like 499 249 etc)
+const bool removeBlank = false; // Remove the blank part at the front
 const bool displayMatrix = false; // Display the matrix of the notes
 const bool outputKeysNeeded = true; // Output the keys it needed to play the whole song
 int returnKeys(int frequency,vector<int> frequencies);
 int main() {
-    freopen("/Users/hqy/Documents/Github/ESAP17-Robotics-Keyboard/Converter/examples/your_name.in","r",stdin);
-    freopen("/Users/hqy/Documents/Github/ESAP17-Robotics-Keyboard/Converter/examples/your_name.out","w",stdout);
+    freopen("/Users/hqy/Documents/Github/ESAP17-Robotics-Keyboard/Converter/examples/under_pressure.in","r",stdin);
+    freopen("/Users/hqy/Documents/Github/ESAP17-Robotics-Keyboard/Converter/examples/under_pressure_with_blank.out","w",stdout);
     int time,notes,length;
     int maximum = 0;
     int blank = 1048576;
@@ -82,15 +82,7 @@ int main() {
             matrix[j][key] = true;
         }
     }
-    if(outputKeysNeeded){
-        cout<<"//Keys needed:";
-        for(int i=0;i<frequencies.size();i++)
-            if(frequencies[i]<128 && frequencies[i]>0)
-                cout<<midiNotes[frequencies[i]]<<" ";
-            else
-                cout<<frequencies[i]<<" ";
-        cout<<endl;
-    }
+    cout<<"//BEGIN AUTO-GENERATED ZONE"<<endl;
     if(displayMatrix){
         for(int i=0;i<maximum;i++){
             for(int j=0;j<frequencies.size();j++){
@@ -102,8 +94,6 @@ int main() {
             cout<<endl;
         }
     }
-    //cout<<"keys"<<frequencies.size()-
-    cout<<"//BEGIN AUTO-GENERATED ZONE"<<endl;
     cout<<"const int noteInterval = "<<interval<<";"<<endl;
     cout<<"const int keys = "<<frequencies.size()<<";"<<endl;
     cout<<"const int length = "<<maximum<<";"<<endl;
@@ -118,6 +108,15 @@ int main() {
         //cout<<endl;
     }
     cout<<"};"<<endl;
+    if(outputKeysNeeded){
+        cout<<"//Keys needed:";
+        for(int i=0;i<frequencies.size();i++)
+            if(frequencies[i]<128 && frequencies[i]>0)
+                cout<<midiNotes[frequencies[i]]<<" ";
+            else
+                cout<<(frequencies[i] / 1000.0)<<" ";
+        cout<<endl;
+    }
     cout<<"//END AUTO-GENERATED ZONE"<<endl;
     //cout<<maximum;
     return 0;

@@ -149,7 +149,7 @@ class ScoresController {
       int timeInterval = (currentTime - this->startTime) - currentRound * interval; 
       bool currentNote[keys];
       this->getNotesArrayFromPROGRAM(currentNote, currentRound);
-      Serial.println(currentRound);
+      //Serial.println(currentRound);
       if(timeInterval <= diffTime && currentRound != 0){
         bool lastNote[keys];
         this->getNotesArrayFromPROGRAM(lastNote, currentRound - 1);
@@ -262,15 +262,16 @@ void setup() {
   pinMode(latchPin, OUTPUT);
   pinMode(LED_BUILTIN, OUTPUT);
   myScore = new ScoresController();
-  ESP.wdtDisable();
+  //ESP.wdtDisable();
   Serial.begin(115209);
   myScore->startPlaying();
 }
 void loop() {
-  
+  unsigned long startTime = millis();
   myScore->periodUpdate();
   checkPause();
-  ESP.wdtFeed();
+  //ESP.wdtFeed();
+  Serial.println(millis()-startTime);
   //delay(10);
 }
 void checkPause() {
