@@ -25,7 +25,7 @@ struct note{
     int frequency;
     int length;
 };
-const int interval = 50; // The interval of the midi
+const int interval = 40; // The interval of the midi
 const bool addOne = false; // Add one to check stop (set to true when the duration has figures like 499 249 etc)
 const bool removeBlank = true; // Remove the blank part at the front
 const bool displayMatrix = false; // Display the matrix of the notes
@@ -33,7 +33,7 @@ const bool outputKeysNeeded = true; // Output the keys it needed to play the who
 int returnKeys(int frequency,vector<int> frequencies);
 int main() {
     freopen("/Users/hqy/Documents/Github/ESAP17-Robotics-Keyboard/Converter/examples/your_name.in","r",stdin);
-    //freopen("/Users/hqy/Documents/Github/ESAP17-Robotics-Keyboard/Converter/examples/your_name.out","w",stdout);
+    freopen("/Users/hqy/Documents/Github/ESAP17-Robotics-Keyboard/Converter/examples/your_name.out","w",stdout);
     int time,notes,length;
     int maximum = 0;
     int blank = 1048576;
@@ -83,7 +83,7 @@ int main() {
         }
     }
     if(outputKeysNeeded){
-        cout<<"Keys needed:";
+        cout<<"//Keys needed:";
         for(int i=0;i<frequencies.size();i++)
             if(frequencies[i]<128 && frequencies[i]>0)
                 cout<<midiNotes[frequencies[i]]<<" ";
