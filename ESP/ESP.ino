@@ -15,12 +15,19 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
  
-#define boardtime unsigned long
+
 #define TRACE 0
 #define INFO 1
 #define NOTICE 2
 #define WARNING 3
 #define LOG_LEVEL 0
+#define NONE -1
+#define START 0
+#define PAUSE 1
+#define RESUME 2
+#define STOP 3
+#define MANUAL 4
+#define NOTE 5
 #define keyDataPin D0
 #define keyClockPin D2
 #define keyLatchPin D1
@@ -28,15 +35,26 @@
 #define numberClockPin D7
 #define numberLatchPin D6
 #define LCDDigit 2
+#define boardtime unsigned long
 #include <algorithm>
 #include <string>
 #include <sstream>
 #include <cstdlib>
 #include <vector>
+#include <ESP8266WiFi.h>
+#include <WiFiUdp.h>
 using namespace std;
 //The length of binary number which can be converted
 const int mask[] = {16777216,8388608,4194304,2097152,1048576,524288,262144,131072,65536,32768,16384,8192,4096,2048,1024,512,256,128,64,32,16,8,4,2,1};
 const int last_iterator = sizeof(mask) / 4 - 1;
+const char* ssid = "modlab1";
+const char* password = "ESAP2017";
+const bool isWifiEnabled = true;
+
+const IPAddress ip = IPAddress(192,168,1,73);
+const IPAddress defaultGateway = IPAddress(192,168,1,1);
+const IPAddress subnetMask = IPAddress(255,255,255,0);
+const int UDPPort = 2808;
 //BEGIN AUTO-GENERATED ZONE
 const int noteInterval = 50;
 const int keys = 19;
@@ -161,7 +179,7 @@ class RegisterAndCommunicationController{
     
   public:
     //Convert data sent from David's program(bool array) to the binary number(to integer)
-    virtual bool magic(bool bArray[], int duration){
+    virtual bool magic(bool bArray[]){
       int arrSize = keys;
       int val = this->convertDataFromDavid(bArray, arrSize);
       digitalWrite(keyLatchPin, LOW);
@@ -182,6 +200,8 @@ class ScoresController {
     boardtime startTime = 0;
     boardtime lastUpdatedTime = 0;
     bool isPlaying = false;
+    bool useInternalNotes = true;
+    bool lastOfflineNotes[keys];
     RegisterAndCommunicationController *output  = new RegisterAndCommunicationController();
     _7SegmentsDisplay *display = new _7SegmentsDisplay();
     virtual void getNotesArrayFromPROGRAM(bool *note, int row){
@@ -191,6 +211,15 @@ class ScoresController {
     }
     
     virtual void getNotes(bool *note, boardtime currentTime){
+      if(!useInternalNotes){
+        for(int i=0;i<keys;i++){
+          note[i] = lastOfflineNotes[i];
+          //Serial.print(note[i]);
+          
+        }
+        //Serial.println(" ");
+        return;
+      }
       int currentRound = (int)((currentTime - this->startTime) / this->interval);
       int timeInterval = (currentTime - this->startTime) - currentRound * interval; 
       bool currentNote[keys];
@@ -212,6 +241,7 @@ class ScoresController {
           note[i] = currentNote[i];
         }
       }
+      return;
     }
 
     virtual void debug(int level, string name, string message){
@@ -267,30 +297,6 @@ class ScoresController {
     }
     
   public:
-    virtual void startPlaying(){
-      this->startTime = millis();
-      this->isPlaying = true;
-      this->debug(INFO, "STATUS", "Playing");
-    }
-    virtual void pausePlaying(){
-      if(this->isPlaying){
-        //this->lastUpdatedTime = 0;
-        this->isPlaying = false;
-        this->debug(INFO, "STATUS", "Pausing");
-      }
-      
-    }
-    virtual void resumePlaying(){
-      if(!this->isPlaying){
-        this->isPlaying = true;
-        this->debug(INFO, "STATUS", "Resuming");
-      }
-    }
-    virtual void stopPlaying(){
-      this->isPlaying = false;
-      this->lastUpdatedTime = 0;
-      this->debug(INFO, "STATUS", "Stoping");
-    }
     virtual void periodUpdate(){
       boardtime currentTime = millis();
       char lettersToDisplay[LCDDigit];
@@ -298,7 +304,7 @@ class ScoresController {
         this->lastUpdatedTime = currentTime;
         bool note[keys];
         this->getNotes(note, currentTime);
-        output->magic(note, 10);
+        output->magic(note);
         memset(lettersToDisplay, '-', sizeof(lettersToDisplay));
         this->getDigitToDisplay(note, lettersToDisplay);
         
@@ -310,27 +316,185 @@ class ScoresController {
             mes.append("0");
         }
         this->debug(TRACE, "BINARY_OUTPUT",mes);
+        if((currentTime - this->startTime) > length * this->interval && useInternalNotes){
+          this->stopPlaying();
+          this->startPlaying();  
+          this->debug(INFO, "STATUS", "Restarting");
+        }
       } else {
         if(this->lastUpdatedTime != 0){ //pausing
           this->startTime += currentTime - this->lastUpdatedTime;
           this->lastUpdatedTime = currentTime;
           this->getLettersToDisplay("PA", lettersToDisplay);
         } else { //stoping
+          this->getLettersToDisplay("ST", lettersToDisplay);
         }
       }
-      if((currentTime - this->startTime) > length * this->interval){
-        this->stopPlaying();
-        this->startPlaying();
-        this->debug(INFO, "STATUS", "Restarting");
-      }
       this->display->displayLCDs(lettersToDisplay);
+    } 
+    virtual void passBy(bool note[]){
+      if(!this->useInternalNotes)
+        Serial.println("notes recieved");
+        for(int i=0; i<keys; i++){
+          lastOfflineNotes[i]=note[i];
+        }
     }
-    
+    virtual void startPlaying(){
+      this->useInternalNotes = true;
+      this->startTime = millis();
+      this->lastUpdatedTime = millis();
+      this->isPlaying = true;
+      this->debug(INFO, "STATUS", "Playing");
+    }
+    virtual void pausePlaying(){
+      if(this->isPlaying && this->useInternalNotes){
+        //this->lastUpdatedTime = 0;
+        this->isPlaying = false;
+        this->debug(INFO, "STATUS", "Pausing");
+      }
+    }
+    virtual void resumePlaying(){
+      if(!this->isPlaying && this->useInternalNotes){
+        this->isPlaying = true;
+        this->debug(INFO, "STATUS", "Resuming");
+      }
+    }
+    virtual void stopPlaying(){
+      if(this->useInternalNotes){
+        this->isPlaying = false;
+        this->lastUpdatedTime = 0;
+        this->debug(INFO, "STATUS", "Stoping");
+      }
+    }
+    virtual void manuallyPlaying(){
+      this->stopPlaying();
+      this->useInternalNotes = false;
+      this->isPlaying = true;
+      this->debug(INFO, "STATUS", "Manual");
+    }
+};
+WiFiServer server(80);
+class WirelessController {
+  private:
+    WiFiUDP UDPServer;
+    const static int packetSize = 64; 
+    byte packetBuffer[packetSize];
+     
+    int phraseData(bool* noteData){
+      int instruction = NONE;
+      int cb = UDPServer.parsePacket();
+      if (cb){
+        UDPServer.read(packetBuffer, packetSize);
+        switch(packetBuffer[0]){
+          case 'A':
+            instruction = START;
+            break;
+          case 'B':
+            instruction = PAUSE;
+            break;
+          case 'C':
+            instruction = RESUME;
+            break;
+          case 'D':
+            instruction = STOP;
+            break;
+          case 'E':
+            instruction = MANUAL;
+            break;
+          case 'F':
+            instruction = NOTE;
+            for(int i = 1; i<keys+1; i++){
+              if(packetBuffer[i] == '0')
+                noteData[i-1] = false;
+              if(packetBuffer[i] == '1')
+                noteData[i-1] = true;
+            }
+            break;
+          default:
+            break;
+        }
+      }
+      if(instruction == NONE){
+        if(this->phraseDataFromHTML(noteData))
+            instruction = NOTE;
+      }
+      return instruction;
+    }
+
+    bool phraseDataFromHTML(bool *noteData){
+      WiFiClient client = server.available();
+      if (!client)    return false;
+      while(!client.available())  delay(1);
+      String request =
+      client.readStringUntil('\r');
+      int index = request.indexOf("/code");
+      int endIndex = request.indexOf("HTTP");
+      int count = 0;
+      client.println("HTTP/1.1 200 OK");
+      client.println("Content-Type: text/html");
+      client.println("");
+      client.println("<html><body><h1>Select the keys you want to play:</h1><input type='checkbox' id='1'>1<input type='checkbox' id='2'>2<input type='checkbox' id='3'>3<input type='checkbox' id='4'>4<input type='checkbox' id='5'>5<input type='checkbox' id='6'>6<input type='checkbox' id='7'>7<input type='checkbox' id='8'>8<input type='checkbox' id='9'>9<input type='checkbox' id='10'>10<input type='checkbox' id='11'>11<input type='checkbox' id='12'>12<input type='checkbox' id='13'>13<input type='checkbox' id='14'>14<input type='checkbox' id='15'>15<input type='checkbox' id='16'>16<input type='checkbox' id='17'>17<input type='checkbox' id='18'>18<input type='checkbox' id='19'>19<br/><br/><input type='button' onclick='return submit();' value='SUBMIT'><script>    function submit(){        var string = ;        for(var i=1;i<=19;i++){            if(document.getElementById(i).checked == true)                string = string + '1';            else                string = string + '0';        }        xhttp = new XMLHttpRequest();        xhttp.open('GET','/code'+string,true);        xhttp.send(null);        console.log(string);        return false;    }</script></body></html>");
+      client.flush();
+      if(index != -1){
+        for(int i = index + 5; i< endIndex - 1; i++){
+          if(request[i] == '0')
+            noteData[count] = false;
+          else
+            noteData[count] = true;
+          count++;
+        }
+        return true;
+      } else {
+        return false;
+      } 
+    }
+  
+  public:
+    void setup(){
+      WiFi.begin(ssid, password);
+      WiFi.config(ip, defaultGateway, subnetMask);
+      while (WiFi.status() != WL_CONNECTED) {
+        ESP.wdtFeed();
+        delay(1000);
+        Serial.println("...");
+      } 
+      UDPServer.begin(UDPPort);
+      server.begin();
+    }
+    void getInstructions(ScoresController *score){
+      int instruction;
+      bool notes[keys];
+      memset(notes,false,sizeof(notes));
+      switch(this->phraseData(notes)){
+        case START:
+          score->startPlaying();
+          break;
+        case PAUSE:
+          score->pausePlaying();
+          break;
+        case RESUME:
+          score->resumePlaying();
+          break;
+        case STOP:
+          score->stopPlaying();
+          break;
+        case MANUAL:
+          score->manuallyPlaying();
+          break;
+        case NOTE:
+          score->passBy(notes);
+          break;
+        default:
+          break;
+      }
+    }
 };
 
 ScoresController *myScore;
+WirelessController *wifi;
 void checkPause();
 void setup() {
+  Serial.begin(115200);
   pinMode(keyDataPin, OUTPUT);
   pinMode(keyClockPin, OUTPUT);
   pinMode(keyLatchPin, OUTPUT);
@@ -340,23 +504,37 @@ void setup() {
   pinMode(LED_BUILTIN, OUTPUT);
   myScore = new ScoresController();
   ESP.wdtDisable();
-  Serial.begin(115209);
-  myScore->startPlaying();
+  Serial.println("Ready?");
+  if(isWifiEnabled){
+    wifi = new WirelessController();
+    wifi->setup();
+    Serial.println("Ready.");
+    myScore->stopPlaying();
+  } else {
+    myScore->startPlaying();
+  }
+  
 }
 void loop() {
   //unsigned long now = millis();
+  if(isWifiEnabled){
+    wifi->getInstructions(myScore);
+  }
   myScore->periodUpdate();
-  checkPause();
+  //checkPause();
   ESP.wdtFeed();
   //Serial.println(millis()-now);
 }
+
+/*
 void checkPause() {
   if(analogRead(A0) > 500){
-    myScore->pausePlaying();
+    myScore->decodeInstruction("START");
   } else {
-    myScore->resumePlaying();
+    myScore->decodeInstruction("STOP");
   }
 }
+*/
 
 
 
