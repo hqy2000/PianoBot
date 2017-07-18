@@ -25,12 +25,14 @@ struct note{
     int frequency;
     int length;
 };
+vector<int> moveBackNotes = {10,13,17};
 const int interval = 50; // The interval of the midi
 const bool addOne = true; // Add one to check stop (set to true when the duration has figures like 499 249 etc)
 const bool removeBlank = false; // Remove the blank part at the front
 const bool displayMatrix = false; // Display the matrix of the notes
 const bool outputKeysNeeded = true; // Output the keys it needed to play the whole song
 int returnKeys(int frequency,vector<int> frequencies);
+bool findKeys(int key);
 int main() {
     freopen("/Users/hqy/Documents/Github/ESAP17-Robotics-Keyboard/Converter/examples/under_pressure.in","r",stdin);
     freopen("/Users/hqy/Documents/Github/ESAP17-Robotics-Keyboard/Converter/examples/under_pressure_with_blank.out","w",stdout);
@@ -86,10 +88,18 @@ int main() {
     if(displayMatrix){
         for(int i=0;i<maximum;i++){
             for(int j=0;j<frequencies.size();j++){
-                if(matrix[i][j] == true)
-                    cout<<"1";
-                else
-                    cout<<"0";
+                if(!findKeys(j)) {
+                    if (matrix[i][j] == true)
+                        cout << "1";
+                    else
+                        cout << "0";
+                }
+                for(int j=0;j<moveBackNotes.size();j++){
+                    if (matrix[i][moveBackNotes[j]] == true)
+                        cout << "1";
+                    else
+                        cout << "0";
+                }
             }
             cout<<endl;
         }
@@ -99,11 +109,19 @@ int main() {
     cout<<"const int length = "<<maximum<<";"<<endl;
     cout<<"const bool PROGMEM notes["<<maximum<<"]["<<frequencies.size()<<"] = {";
     for(int i=0;i<maximum;i++){
-        for(int j=0;j<=frequencies.size()-1;j++){
-            if(matrix[i][j] == true)
-                cout<<"true"<<", ";
-            else
-                cout<<"false"<<", ";
+        for(int j=0;j<frequencies.size();j++){
+            if(!findKeys(j)) {
+                if (matrix[i][j] == true)
+                    cout << "true" << ", ";
+                else
+                    cout << "false" << ", ";
+            }
+            for(int j=0;j<moveBackNotes.size();j++){
+                if (matrix[i][moveBackNotes[j]] == true)
+                    cout << "true" << ", ";
+                else
+                    cout << "false" << ", ";
+            }
         }
         //cout<<endl;
     }
@@ -111,15 +129,29 @@ int main() {
     if(outputKeysNeeded){
         cout<<"//Keys needed:";
         for(int i=0;i<frequencies.size();i++)
-            if(frequencies[i]<128 && frequencies[i]>0)
-                cout<<midiNotes[frequencies[i]]<<" ";
+            if(!findKeys(i))
+                if(frequencies[i]<128 && frequencies[i]>0)
+                    cout<<midiNotes[frequencies[i]]<<" ";
+                else
+                    cout<<(frequencies[i] / 1000.0)<<" ";
+        for(int j=0;j<moveBackNotes.size();j++){
+            if(frequencies[moveBackNotes[j]]<128 && frequencies[moveBackNotes[j]]>0)
+                cout<<midiNotes[frequencies[moveBackNotes[j]]]<<" ";
             else
-                cout<<(frequencies[i] / 1000.0)<<" ";
+                cout<<(frequencies[moveBackNotes[j]] / 1000.0)<<" ";
+        }
         cout<<endl;
     }
     cout<<"//END AUTO-GENERATED ZONE"<<endl;
     //cout<<maximum;
     return 0;
+}
+bool findKeys(int key){
+    for(int i=0; i< moveBackNotes.size(); i++){
+        if (key == moveBackNotes[i])
+            return true;
+    }
+    return false;
 }
 int returnKeys(int frequency,vector<int> frequencies){
     for(int i=0;i<=frequencies.size();i++){
