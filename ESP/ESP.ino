@@ -49,7 +49,7 @@ const int mask[] = {16777216,8388608,4194304,2097152,1048576,524288,262144,13107
 const int last_iterator = sizeof(mask) / 4 - 1;
 const char* ssid = "modlab1";
 const char* password = "ESAP2017";
-const bool isWifiEnabled = true;
+const bool isWifiEnabled = false;
 
 const IPAddress ip = IPAddress(192,168,1,73);
 const IPAddress defaultGateway = IPAddress(192,168,1,1);
