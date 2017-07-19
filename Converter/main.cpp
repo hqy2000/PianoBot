@@ -28,14 +28,14 @@ struct note{
 vector<int> moveBackNotes = {};
 const int interval = 50; // The interval of the midi
 const bool addOne = false; // Add one to check stop (set to true when the duration has figures like 499 249 etc)
-const bool removeBlank = false; // Remove the blank part at the front
-const bool displayMatrix = false; // Display the matrix of the notes
+const bool removeBlank = true; // Remove the blank part at the front
+const bool displayMatrix = true; // Display the matrix of the notes
 const bool outputKeysNeeded = true; // Output the keys it needed to play the whole song
 int returnKeys(int frequency,vector<int> frequencies);
 bool findKeys(int key);
 int main() {
-    freopen("/Users/hqy/Documents/Github/ESAP17-Robotics-Keyboard/Converter/examples/double_key_test.in","r",stdin);
-    freopen("/Users/hqy/Documents/Github/ESAP17-Robotics-Keyboard/Converter/examples/double_key_test.out","w",stdout);
+    freopen("/Users/hqy/Documents/Github/ESAP17-Robotics-Keyboard/Converter/examples/under_pressure.in","r",stdin);
+    freopen("/Users/hqy/Documents/Github/ESAP17-Robotics-Keyboard/Converter/examples/under_pressure_test.out","w",stdout);
     int time,notes,length;
     int maximum = 0;
     int blank = 1048576;
