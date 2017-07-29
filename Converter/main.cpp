@@ -25,18 +25,20 @@ struct note{
     int frequency;
     int length;
 };
+vector<int> availableKeys = {55,57,60,62,64,65,67,69,71,72,73,74,76,78,79,81,83,85,86};
 vector<int> moveBackNotes = {10,13,17};
 vector<int> duplicatedNotes = {17,18};
-const int interval = 50; // The interval of the midi
+const int interval = 25; // The interval of the midi
 const bool addOne = true; // Add one to check stop (set to true when the duration has figures like 499 249 etc)
 const bool removeBlank = false; // Remove the blank part at the front
-const bool displayMatrix = false; // Display the matrix of the notes
+const bool displayMatrix = true; // Display the matrix of the notes
 const bool outputKeysNeeded = true; // Output the keys it needed to play the whole song
 int returnKeys(int frequency,vector<int> frequencies);
 bool findKeys(int key);
+bool keyAvailable(int key);
 int main() {
-    freopen("/Users/hqy/Documents/Github/ESAP17-Robotics-Keyboard/Converter/examples/under_pressure.in","r",stdin);
-    freopen("/Users/hqy/Documents/Github/ESAP17-Robotics-Keyboard/Converter/examples/under_pressure_wit_blank.out","w",stdout);
+    freopen("/Users/hqy/Documents/Github/ESAP17-Robotics-Keyboard/Converter/examples/hongri.middle","r",stdin);
+    freopen("/Users/hqy/Documents/Github/ESAP17-Robotics-Keyboard/Converter/examples/hongri.out","w",stdout);
     int time,notes,length;
     int maximum = 0;
     int blank = 1048576;
@@ -44,30 +46,46 @@ int main() {
     vector<note> scores;
     vector<int> frequencies;
     while(cin>>time>>notes>>length){
-        if(addOne)
-            length ++;
-        length = length / interval;
-        time = time / interval;
-        if(time<blank) {
-            blank = time;
-        }
-        note a = {
-                .frequency = notes,
-                .time = time,
-                .length = length,
-        };
-        scores.push_back(a);
-        if(length+time>maximum){
-            maximum = length+time;
-        }
-        bool exist = false;
-        for(int i=0; i< frequencies.size(); i++){
-            if(notes == frequencies[i]){
-                exist = true;
-            }
-        }
-        if(!exist){
-            frequencies.push_back(notes);
+        //if(keyAvailable(notes)) {
+            //cout<<notes<<endl;
+            if(length == 0){
+
+                bool exist = false;
+                for (int i = 0; i < frequencies.size(); i++) {
+                    if (notes == frequencies[i]) {
+                        exist = true;
+                    }
+                }
+                if (!exist) {
+                    frequencies.push_back(notes);
+                }
+            } else {
+                if (addOne)
+                    length++;
+                length = length / interval;
+                time = time  / interval ;
+                if (time < blank) {
+                    blank = time;
+                }
+                note a = {
+                        .frequency = notes,
+                        .time = time,
+                        .length = length,
+                };
+                scores.push_back(a);
+                if (length + time > maximum) {
+                    maximum = length + time;
+                }
+                bool exist = false;
+                for (int i = 0; i < frequencies.size(); i++) {
+                    if (notes == frequencies[i]) {
+                        exist = true;
+                    }
+                }
+                if (!exist) {
+                    frequencies.push_back(notes);
+                }
+            //}
         }
     }
     sort(frequencies.begin(), frequencies.end());
@@ -160,4 +178,13 @@ int returnKeys(int frequency,vector<int> frequencies){
         if(frequencies[i] == frequency)
             return i;
     }
+}
+bool keyAvailable(int key){
+    //cout<<key<<endl;
+    for(int i=0;i<19;i++){
+        if(key == availableKeys[i])
+            return true;
+
+    }
+    return false;
 }
